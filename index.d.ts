@@ -7,6 +7,8 @@ declare module "@elara-services/tickets" {
         client: Client;
         prefix: string;
         encryptToken: string;
+        ticketCategory?: string;
+
         webhookId?: string;
         webhookToken?: string;
         webhookUsername?: string;

@@ -11,6 +11,7 @@ const { Client } = require("discord.js"),
         tickets = new Tickets({
             client,
             prefix: "support", // This is what is used for interactions (buttons) and the start of the channel name
+            ticketCategory: "", // When tickets get created they get created in this category, (OPTIONAL) - Default is the category ID for the starter message's channel.
             webhookId: "WEBHOOK ID HERE",
             webhookToken: "WEBHOOK TOKEN HERE",
             encryptToken: "ASB!@#$%^&*(B", // This is to encrypt/decrypt the user IDs in the channel topic, to avoid non-staff from seeing who's ticket it is

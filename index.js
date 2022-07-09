@@ -102,7 +102,7 @@ module.exports = class Tickets {
     async run(int) {
         if (int?.isButton?.()) {
             let { guild, channel, member, customId } = int,
-                  category = guild?.channels?.resolve?.(channel?.parentId),
+                  category = guild?.channels?.resolve?.(this.options.ticketCategory || channel?.parentId),
                 [ support, supportUsers ] = [ [], [] ];
             if (!guild || !guild.available || !channel || !member || !category) return;
             if (this.options?.supportRoleIds?.length) for (const sup of this.options.supportRoleIds) {
