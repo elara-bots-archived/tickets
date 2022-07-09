@@ -3,7 +3,7 @@ declare module "@elara-services/tickets" {
     import { Client, MessageOptions, GuildMember, Guild, User, TextBasedChannel, Message, Interaction } from "discord.js";
     import Webhook from "discord-hook";
 
-    interface TicketOptions {
+    export interface TicketOptions {
         client: Client;
         prefix: string;
         encryptToken: string;
@@ -14,6 +14,16 @@ declare module "@elara-services/tickets" {
         supportRoleIds?: string[];
         supportUserIds?: string[];
         ticketOpen?: Pick<MessageOptions, "content" | "embeds">
+        appeals?: {
+            enabled: boolean;
+            mainServer: {
+                id: string;
+                checkIfBanned: boolean;
+            };
+            embeds?: {
+                not_banned: Pick<MessageOptions, "content" | "embeds" | "components">
+            }
+        }
     }
 
     class Tickets {

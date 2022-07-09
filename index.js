@@ -8,7 +8,7 @@ module.exports = class Tickets {
         this.options = options;
     };
     get prefix() { return `system:ticket:${this.options.prefix}`; };
-    webhook() { 
+    webhook() {
         return new Webhook(`https://discord.com/api/webhooks/${this.options.webhookId}/${this.options.webhookToken}`, {
             username: this.options.webhookUsername || "Tickets", 
             avatar_url: this.options.webhookAvatar || "https://cdn.discordapp.com/emojis/818757771310792704.png?v=1", 
@@ -124,12 +124,34 @@ module.exports = class Tickets {
              */
             const send = async (options = {}, defer = false) => {
                 if (defer) return int.deferReply(options).catch(() => null);
-                if (int.replied || int.deferred) return int.editReply(options).catch(() => {});
+                if (int.replied || int.deferred) return int.editReply(options).catch(() => null);
                 return int.reply(options).catch(() => null);
             };
             switch (customId) {
                 case this.prefix: {
                     await send({ ephemeral: true }, true);
+                    if (this.options.appeals?.enabled) {
+                        let appeals = this.options.appeals;
+                        if (appeals.mainserver?.id && appeals.mainserver.checkIfBanned) {
+                            let server = this.options.client.guilds.resolve(appeals.mainserver.id);
+                            if (server?.available) {
+                                let isBanned = await server.bans.fetch({ user: member.id, force: true }).catch(() => null);
+                                if (!isBanned) return send(
+                                    typeof appeals.embeds?.not_banned === "object" ? 
+                                    appeals.embeds.not_banned : 
+                                    { embeds: [
+                                        { 
+                                            author: { name: guild.name, icon_url: guild.iconURL({ dynamic: true }) },
+                                            title: "INFO", 
+                                            description: `❌ You can't open this ticket due to you not being banned in the main server!`, 
+                                            color: 0xFF0000, 
+                                            timestamp: new Date() 
+                                        }
+                                    ]}
+                                )
+                            }
+                        }
+                    }
                     let [ permissions, allow ] = [
                         [],
                         [ "ADD_REACTIONS", "ATTACH_FILES", "CREATE_INSTANT_INVITE", "EMBED_LINKS", "READ_MESSAGE_HISTORY", "VIEW_CHANNEL", "USE_EXTERNAL_EMOJIS", "SEND_MESSAGES" ]
@@ -161,7 +183,7 @@ module.exports = class Tickets {
                         components: [{ type: 1, components: [{ type: 2, custom_id: `${this.prefix}:close`, label: "Close Ticket", style: 4, emoji: { name: "🔒" } }] }]
                     }).catch(() => null);
                     if (!msg) return null
-                    this.webhook()
+                    if (this.options.webhookId && this.options.webhookToken) this.webhook()
                     .embed({
                         author: { name: guild.name, icon_url: guild.iconURL({ dynamic: true }) },
                         title: "Ticket: Opened",

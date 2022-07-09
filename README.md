@@ -25,6 +25,16 @@ const { Client } = require("discord.js"),
             ticketOpen: {
                 content: "", // The content of the ticket message once it gets created, use "%user%" or "%server%" for the user mention or server name
                 embeds: [], // View https://discord.com/developers/docs/resources/channel#embed-object 
+            },
+            appeals: { // OPTIONAL
+                enabled: true, // If the appeals server checks should be enabled.
+                mainserver: {
+                    id: "", // The main server's id 
+                    checkIfBanned: true // Check if the user is banned in the main server, if not they can't open a ticket.
+                },
+                embeds: {
+                    not_banned: {} // The embeds, content and components for the not banned message. 
+                }
             }
         })
 
