@@ -11,6 +11,8 @@ const { Collection, WebhookClient, MessageEmbed } = require("discord.js"),
 
 module.exports = class Tickets {
     constructor(options) {
+        if (typeof options !== "object") throw new Error(`You didn't provide any data in the constructor, fill it out!`);
+        if (!("client" in options) || !("prefix" in options) || !("encryptToken" in options)) throw new Error(`You forgot to fill out either 'client', 'prefix' or 'encryptToken'`)
         this.options = options;
     };
     get prefix() { return `system:ticket:${this.options.prefix}`; };
