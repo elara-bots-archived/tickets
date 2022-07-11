@@ -1,20 +1,14 @@
 declare module "@elara-services/tickets" {
     
-    import { Client, MessageOptions, GuildMember, Guild, User, TextBasedChannel, Message, Interaction } from "discord.js";
+    import { Client, MessageOptions, GuildMember, Guild, User, TextBasedChannel, Message, Interaction, ModalOptions } from "discord.js";
     import Webhook from "discord-hook";
 
     export interface TicketOptions {
         client: Client;
         prefix: string;
+        debug?: boolean;
         encryptToken: string;
         ticketCategory?: string;
-
-        webhookId?: string;
-        webhookToken?: string;
-        webhookUsername?: string;
-        webhookAvatar?: string;
-        supportRoleIds?: string[];
-        supportUserIds?: string[];
         ticketOpen?: Pick<MessageOptions, "content" | "embeds">
         appeals?: {
             enabled: boolean;
@@ -25,7 +19,43 @@ declare module "@elara-services/tickets" {
             embeds?: {
                 not_banned: Pick<MessageOptions, "content" | "embeds" | "components">
             }
-        }
+        };
+        modal?: {
+            enabled: boolean;
+            title?: string;
+            questions?: {
+                label: string;
+                style: 1 | 2;
+                placeholder?: string;
+                value?: string;
+                required?: boolean;
+                min_length?: number;
+                max_length?: number;
+            }[]
+        };
+        webhook?: {
+            id?: string;
+            token?: string;
+            username?: string;
+            avatar?: string
+        };
+        support?: {
+            roles?: string[];
+            users?: string[];
+        };
+
+        /** @deprecated Use 'webhook.id' */
+        webhookId?: string;
+        /** @deprecated Use 'webhook.token' */
+        webhookToken?: string;
+        /** @deprecated Use 'webhook.username' */
+        webhookUsername?: string;
+        /** @deprecated Use 'webhook.avatar' */
+        webhookAvatar?: string;
+        /** @deprecated Use 'support.roles' */
+        supportRoleIds?: string[];
+        /** @deprecated Use 'support.users' */
+        supportUserIds?: string[];
     }
 
     class Tickets {
