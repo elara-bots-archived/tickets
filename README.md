@@ -32,7 +32,7 @@ const { Client } = require("discord.js"),
         modal: {
             enabled: true, // If this form should be enabled  / shown 
             title: "", // The top title of the modal / form 
-            quesstions: [
+            questions: [
                 {
                     label: "[NAME]", // The name of this question
                     style: 2, // 1 (SHORT ANSWER) | 2 (LONG ANSWER)
