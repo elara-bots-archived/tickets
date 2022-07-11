@@ -1,6 +1,6 @@
 {
   "name": "@elara-services/tickets",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Helper for tickets",
   "main": "index.js",
   "types": "index.d.ts",

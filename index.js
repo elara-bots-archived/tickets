@@ -45,9 +45,9 @@ module.exports = class Tickets {
              * @param {boolean} defer 
              */
             const send = async (options = {}, defer = false) => {
-                if (defer) return int.deferReply(options).catch(this._debug);
-                if (int.replied || int.deferred) return int.editReply(options).catch(this._debug);
-                return int.reply(options).catch(this._debug);
+                if (defer) return int.deferReply(options).catch(e => this._debug(e));
+                if (int.replied || int.deferred) return int.editReply(options).catch(e => this._debug(e));
+                return int.reply(options).catch(e => this._debug(e));
             };
             switch (customId) {
                 case this.prefix: {
@@ -57,7 +57,7 @@ module.exports = class Tickets {
                             components: this.options.modal.questions?.length >= 1 ?
                                 this.options.modal.questions.slice(0, 5).map(c => ({ type: 1, components: [{ min_length: c.min_length || 10, max_length: c.max_length || 4000, type: 4, style: c.style || 2, label: c.label, value: c.value, placeholder: c.placeholder, required: c.required, custom_id: c.label || `random_${Math.floor(Math.random() * 10000)}` }] })) :
                                 []
-                        })).catch(this._debug);
+                        })).catch(e => this._debug(e));
                     }
                     return this.handleCreate({ guild, member, category, send })
                 };
@@ -100,7 +100,7 @@ module.exports = class Tickets {
                 if (!user) return send({ content: `❌ I was unable to fetch the user that opened the ticket.`, ephemeral: true })
                 let messages = await this.fetchMessages(channel, 5000);
                 if (!messages || !messages.length) return send({ ephemeral: true, content: `❌ I was unable to close the ticket, I couldn't fetch the messages in this channel.` })
-                let closed = await channel.delete(`${member.user.tag} (${member.id}) closed the ticket.`).catch(this._debug);
+                let closed = await channel.delete(`${member.user.tag} (${member.id}) closed the ticket.`).catch(e => this._debug(e));
                 if (!closed) return send({ ephemeral: true, content: `${emojis.x} I was unable to delete the channel & close the ticket.` })
                 return this.closeTicket({ channel, guild, user, member, messages });
             }
@@ -164,7 +164,7 @@ module.exports = class Tickets {
                 { type: "role", id: guild.id, deny: ["VIEW_CHANNEL"] },
                 ...permissions
             ]
-        }).catch(this._debug);
+        }).catch(e => this._debug(e));
         if (!channel) return send({ content: `${emojis.x} I was unable to create the ticket channel, if this keeps happening contact one of the staff members via their DMs!` });
         let msg = await channel.send({
             content: this.options.ticketOpen?.content?.replace?.(/%user%/gi, member.user.toString())?.replace?.(/%server%/gi, guild.name) || `${member.user.toString()} 👋 Hello, please explain what you need help with.`,
@@ -176,9 +176,9 @@ module.exports = class Tickets {
                 footer: { text: `To close this ticket press the button below.` }
             }],
             components: [{ type: 1, components: [{ type: 2, custom_id: `${this.prefix}:close`, label: "Close Ticket", style: 4, emoji: { name: "🔒" } }] }]
-        }).catch(this._debug);
+        }).catch(e => this._debug(e));
         if (!msg) return null;
-        if (embeds?.length <= 10) for await (const embed of embeds) await channel.send({ embeds: [ embed ] }).catch(this._debug);
+        if (embeds?.length <= 10) for await (const embed of embeds) await channel.send({ embeds: [ embed ] }).catch(e => this._debug(e));
         if (this.webhookOptions.id && this.webhookOptions.token) this.webhook()
             .embed({
                 author: { name: guild.name, icon_url: guild.iconURL({ dynamic: true }) },
@@ -187,7 +187,7 @@ module.exports = class Tickets {
                 color: 0xFF000,
                 timestamp: new Date(),
                 footer: { text: `Ticket ID: ${channel.name.split("-")[1]}` },
-            }).send().catch(this._debug);
+            }).send().catch(e => this._debug(e));
         return send({
             embeds: [
                 {
@@ -365,7 +365,7 @@ module.exports = class Tickets {
                     .embeds(embeds)
                     .button({ type: 1, components })
                     .edit(m.id)
-                    .catch(this._debug);
+                    .catch(e => this._debug(e));
                 if (user) user.send({
                     embeds: [{
                         author: { name: guild.name, icon_url: guild.iconURL({ dynamic: true }) },
@@ -375,8 +375,8 @@ module.exports = class Tickets {
                         footer: { text: `Ticket ID: ${channel.name.split("-")[1]}` }
                     }],
                     components: [{ type: 1, components }]
-                }).catch(this._debug);
-            }).catch(this._debug);
+                }).catch(e => this._debug(e));
+            }).catch(e => this._debug(e));
     };
     /**
      * @typedef {Object} getSupportResponse
