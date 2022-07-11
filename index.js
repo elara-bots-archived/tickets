@@ -396,7 +396,7 @@ module.exports = class Tickets {
 
     /** @private */
     _debug(...args) {
-        if (!this.options.debug) return null;
+        if (!this.options?.debug) return null;
         console.log(...args);
         return null;
     }
