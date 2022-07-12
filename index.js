@@ -1,13 +1,12 @@
 const { Collection, WebhookClient, MessageEmbed } = require("discord.js"),
-    { encrypt, decrypt } = require("aes256"),
-    { generate } = require("shortid"),
-    { Interactions: { button, modal } } = require("@elara-services/packages"),
-      Webhook = require("discord-hook"),
-      de = {
-        user: "<:Members:860931214232125450>",
-        channel: "<:Channel:841654412509839390>",
-        transcript: "<:Log:792290922749624320>"
-      }
+      { generate } = require("shortid"),
+      { Interactions: { button, modal }, AES } = require("@elara-services/packages"),
+        Webhook = require("discord-hook"),
+        de = {
+            user: "<:Members:860931214232125450>",
+            channel: "<:Channel:841654412509839390>",
+            transcript: "<:Log:792290922749624320>"
+        };
 
 module.exports = class Tickets {
     constructor(options = {}) {
@@ -15,7 +14,9 @@ module.exports = class Tickets {
         if (!("client" in options) || !("prefix" in options) || !("encryptToken" in options)) throw new Error(`You forgot to fill out either 'client', 'prefix' or 'encryptToken'`)
         this.options = options;
     };
+
     get prefix() { return `system:ticket:${this.options.prefix}`; };
+
     /** @private */
     get webhookOptions() {
         return {
@@ -25,6 +26,7 @@ module.exports = class Tickets {
             avatar: this.options.webhook?.avatar || this.options.webhookAvatar || "https://cdn.discordapp.com/emojis/818757771310792704.png?v=1"
         }
     }
+    
     webhook() {
         const { id, token, username, avatar } = this.webhookOptions;
         return new Webhook(`https://discord.com/api/webhooks/${id}/${token}`, { username, avatar_url: avatar });
@@ -51,21 +53,13 @@ module.exports = class Tickets {
             };
             switch (customId) {
                 case this.prefix: {
-                    if (this.options.modal?.enabled) {
-                        return int.showModal(this.modal({
-                            title: this.options.modal.title,
-                            components: this.options.modal.questions?.length >= 1 ? this.options.modal.questions.slice(0, 5).map(c => ({ type: 1, components: [{ min_length: c.min_length || 10, max_length: c.max_length || 4000, type: 4, style: c.style || 2, label: c.label, value: c.value, placeholder: c.placeholder, required: c.required, custom_id: c.label || `random_${Math.floor(Math.random() * 10000)}` }] })) : []
-                        })).catch(e => this._debug(e));
-                    }
+                    if (this.options.modal?.enabled) return int.showModal(this.modal({ title: this.options.modal.title, components: this.options.modal.questions?.length >= 1 ? this.options.modal.questions.slice(0, 5).map(c => ({ type: 1, components: [{ min_length: c.min_length || 10, max_length: c.max_length || 4000, type: 4, style: c.style || 2, label: c.label, value: c.value, placeholder: c.placeholder, required: c.required, custom_id: c.label || `random_${Math.floor(Math.random() * 10000)}` }] })) : [] })).catch(e => this._debug(e));
                     return this.handleCreate({ guild, member, category, send })
                 };
 
                 case `${this.prefix}:close`: {
                     if (this.options.support?.canOnlyCloseTickets && !member.permissions.has("MANAGE_GUILD")) {
-                        let [ support, staffOnly ] = [ 
-                            this.getSupportIds(), 
-                            () => send({ ephemeral: true, embeds: [ { author: { name: `Only support staff can close tickets`, iconURL: "https://cdn.discordapp.com/emojis/781955502035697745.gif" }, color: 0xFF0000 } ] }) 
-                        ];
+                        let [ support, staffOnly ] = [ this.getSupportIds(), () => send({ ephemeral: true, embeds: [ { author: { name: `Only support staff can close tickets`, iconURL: "https://cdn.discordapp.com/emojis/781955502035697745.gif" }, color: 0xFF0000 } ] })  ];
                         if (!support.users?.includes?.(member.id)) return staffOnly();
                         if (support.roles?.length && !support.roles.some(c => member.roles.cache.has(c))) return staffOnly()
                     }
@@ -73,9 +67,7 @@ module.exports = class Tickets {
                 }
 
                 case `${this.prefix}:modal_submit`: {
-                    let [embed, fields, split] = [
-                        new MessageEmbed().setColor("ORANGE").setTimestamp().setTitle(`For Responses`).setFooter({ text: `ID: ${member.id}` }).setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ dynamic: true }) }), 
-                        [], false];
+                    let [ embed, fields, split ] = [ new MessageEmbed().setColor("ORANGE").setTimestamp().setTitle(`For Responses`).setFooter({ text: `ID: ${member.id}` }).setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ dynamic: true }) }),  [], false];
                     for (const c of int.fields.components) {
                         for (const cc of c.components) {
                             if (cc.value && cc.customId) {
@@ -97,12 +89,13 @@ module.exports = class Tickets {
                 }
             };
             if (customId.startsWith(`${this.prefix}:close:confirm`)) {
-                let user = this.options.client.users.resolve(customId.split("close:confirm:")[1]) ?? await this.options.client.users.fetch(customId.split("close:confirm:")[1]).catch(() => null);
-                if (!user) return send({ content: `❌ I was unable to fetch the user that opened the ticket.`, ephemeral: true })
+                await send({ ephemeral: true }, true);
+                let user = await this.options.client.users.fetch(customId.split("close:confirm:")[1]).catch(() => null);
+                if (!user) return send({ content: `❌ I was unable to fetch the user that opened the ticket.` })
                 let messages = await this.fetchMessages(channel, 5000);
-                if (!messages?.length) return send({ ephemeral: true, content: `❌ I was unable to close the ticket, I couldn't fetch the messages in this channel.` })
+                if (!messages?.length) return send({ content: `❌ I was unable to close the ticket, I couldn't fetch the messages in this channel.` })
                 let closed = await channel.delete(`${member.user.tag} (${member.id}) closed the ticket.`).catch(e => this._debug(e));
-                if (!closed) return send({ ephemeral: true, content: `❌ I was unable to delete the channel & close the ticket.` })
+                if (!closed) return send({ content: `❌ I was unable to delete the channel & close the ticket.` })
                 return this.closeTicket({ channel, guild, user, member, messages });
             }
         };
@@ -151,8 +144,6 @@ module.exports = class Tickets {
                 }
             }
         }
-
-        /** @type {import("discord.js").TextChannel} */
         let channel = await guild.channels.create(`${this.options.prefix}-${generate().slice(0, 5).replace(/-|_/g, "")}`, {
             type: "GUILD_TEXT", parent: category, reason: `Ticket created by: @${member.user.tag} (${member.id})`,
             topic: `ID: ${this.code(member.id, "e")}`,
@@ -202,11 +193,7 @@ module.exports = class Tickets {
      * @param {import("@elara-services/packages").Modal['components']} [options.components]
      */
     modal(options = { title: "", components: [] }) {
-        return modal({
-            id: `${this.prefix}:modal_submit`,
-            title: options?.title || "Create Ticket",
-            components: options?.components?.length >= 1 ? options.components : [ { type: 1, components: [ { type: 4, min_length: 10, max_length: 4000, custom_id: "message", label: "Content", style: 2, placeholder: "What's the ticket about?", required: true } ] } ]
-        })
+        return modal({ id: `${this.prefix}:modal_submit`, title: options?.title || "Create Ticket", components: options?.components?.length >= 1 ? options.components : [ { type: 1, components: [ { type: 4, min_length: 10, max_length: 4000, custom_id: "message", label: "Content", style: 2, placeholder: "What's the ticket about?", required: true } ] } ] })
     }
 
     async starterMessage(channelId, options) {
@@ -214,20 +201,16 @@ module.exports = class Tickets {
         if (!channel) return Promise.reject(`No channel found for: ${channelId}`);
         if (!channel.isText()) return Promise.reject(`The channel ID provided isn't a text-based-channel`);
         if (!channel.permissionsFor?.(this.options.client.user.id)?.has?.(["VIEW_CHANNEL", "SEND_MESSAGES", "EMBED_LINKS", "ATTACH_FILES", "READ_MESSAGE_HISTORY"])) return Promise.reject(`I'm missing permissions in ${channel.name} (${channelId})`);
-        return channel.send({
-            content: options?.content,
-            files: options?.attachments,
-            embeds: options?.embeds,
-            components: options?.components || [{ type: 1, components: [this.button()] }]
-        })
+        return channel.send({ content: options?.content, files: options?.attachments, embeds: options?.embeds, components: options?.components || [{ type: 1, components: [this.button()] }] })
             .then(() => console.log(`Sent the starter message in ${channel.name} (${channel.id})`))
     };
 
     code(id, type = "d") {
         try {
+            const aes = new AES(this.options.encryptToken);
             switch (type) {
-                case "e": return encrypt(this.options.encryptToken, id);
-                case "d": return decrypt(this.options.encryptToken, id);
+                case "e": return aes.encrypt(id);
+                case "d": return aes.decrypt(id);
             }
         } catch {
             return id;
@@ -252,13 +235,6 @@ module.exports = class Tickets {
         return [...(await channel.messages.fetch({ limit, before, after, around }).catch(() => new Collection())).values()];
     };
 
-    /**
-     * @param {import("discord.js").TextBasedChannel} channel 
-     * @param {import("discord.js").Message[]} messages 
-     * @param {string} ticketID 
-     * @param {string} type 
-     * @returns {string}
-     */
     displayMessages(channel, messages = [], ticketID, type) {
         let users = [];
         for (const i of messages.values()) {
@@ -359,15 +335,7 @@ module.exports = class Tickets {
                 }).catch(e => this._debug(e));
             }).catch(e => this._debug(e));
     };
-    /**
-     * @typedef {Object} getSupportResponse
-     * @property {string[]} [roles]
-     * @property {string[]} [users]
-     * 
-     * 
-     * @private
-     * @returns {getSupportResponse}
-     */
+
     getSupportIds() {
         return {
             roles: this.options.support?.roles || this.options.supportRoleIds || [],
