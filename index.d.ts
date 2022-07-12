@@ -12,7 +12,7 @@ declare module "@elara-services/tickets" {
         ticketOpen?: Pick<MessageOptions, "content" | "embeds">
         appeals?: {
             enabled: boolean;
-            mainServer: {
+            mainserver: {
                 id: string;
                 checkIfBanned: boolean;
             };
@@ -42,6 +42,7 @@ declare module "@elara-services/tickets" {
         support?: {
             roles?: string[];
             users?: string[];
+            canOnlyCloseTickets?: boolean;
         };
 
         /** @deprecated Use 'webhook.id' */

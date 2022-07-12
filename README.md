@@ -51,6 +51,7 @@ const { Client } = require("discord.js"),
             avatar: "", // 'webhookAvatar' support will be removed in the next major version
         },
         support: {
+            canOnlyCloseTickets: true, // If 'true' only roles and users listed below can close tickets. (OR people with 'Manage Server' permission)
             roles: [ // 'supportRoleIds' support will be removed in the next major version
                 "123456789"
             ],
