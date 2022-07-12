@@ -1,14 +1,17 @@
 {
   "name": "@elara-services/tickets",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Helper for tickets",
   "main": "index.js",
   "types": "index.d.ts",
   "typings": "index.d.ts",
   "author": "SUPERCHIEFYT (Elara-Discord-Bots, Elara-Services)",
   "license": "MIT",
+  "scripts": {
+    "postinstall": "node post.js"
+  },
   "optionalDependencies": {
-    "discord.js": "13.8.0"
+    "discord.js": "13.8.1"
   },
   "dependencies": {
     "@elara-services/packages": "5.0.0",
