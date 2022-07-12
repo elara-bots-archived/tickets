@@ -60,8 +60,9 @@ module.exports = class Tickets {
                 case `${this.prefix}:close`: {
                     if (this.options.support?.canOnlyCloseTickets && !member.permissions.has("MANAGE_GUILD")) {
                         let [ support, staffOnly ] = [ this.getSupportIds(), () => send({ ephemeral: true, embeds: [ { author: { name: `Only support staff can close tickets`, iconURL: "https://cdn.discordapp.com/emojis/781955502035697745.gif" }, color: 0xFF0000 } ] })  ];
-                        if (!support.users?.includes?.(member.id)) return staffOnly();
-                        if (support.roles?.length && !support.roles.some(c => member.roles.cache.has(c))) return staffOnly()
+                        if (!support.users?.includes?.(member.id)) {
+                            if (!support.roles?.some?.(c => member.roles.cache.has(c))) return staffOnly()
+                        }
                     }
                     return send({ ephemeral: true, content: `🤔 Are you sure you want to close this ticket?`, components: [{ type: 1, components: [{ type: 2, custom_id: `${this.prefix}:close:confirm:${this.code(channel.topic?.split?.("ID: ")?.[1])}`, label: "Yes close the ticket", style: 4, emoji: { id: "807031399563264030" } }] }] })
                 }
