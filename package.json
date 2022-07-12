@@ -1,6 +1,6 @@
 {
   "name": "@elara-services/tickets",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "description": "Helper for tickets",
   "main": "index.js",
   "types": "index.d.ts",
@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@elara-services/packages": "5.0.0",
-    "aes256": "1.1.0",
     "discord-hook": "2.0.0",
     "shortid": "2.2.16"
   }
