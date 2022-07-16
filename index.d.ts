@@ -12,6 +12,7 @@ declare module "@elara-services/tickets" {
         ticketOpen?: Pick<MessageOptions, "content" | "embeds">
         appeals?: {
             enabled: boolean;
+            sendBanResults?: boolean;
             mainserver: {
                 id: string;
                 checkIfBanned: boolean;

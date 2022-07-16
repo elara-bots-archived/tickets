@@ -1,12 +1,12 @@
 const { Collection, WebhookClient, MessageEmbed } = require("discord.js"),
-      { generate } = require("shortid"),
-      { Interactions: { button, modal }, AES } = require("@elara-services/packages"),
-        Webhook = require("discord-hook"),
-        de = {
-            user: "<:Members:860931214232125450>",
-            channel: "<:Channel:841654412509839390>",
-            transcript: "<:Log:792290922749624320>"
-        };
+    { generate } = require("shortid"),
+    { Interactions: { button, modal }, AES } = require("@elara-services/packages"),
+    Webhook = require("discord-hook"),
+    de = {
+        user: "<:Members:860931214232125450>",
+        channel: "<:Channel:841654412509839390>",
+        transcript: "<:Log:792290922749624320>"
+    };
 
 module.exports = class Tickets {
     constructor(options = {}) {
@@ -26,7 +26,7 @@ module.exports = class Tickets {
             avatar: this.options.webhook?.avatar || this.options.webhookAvatar || "https://cdn.discordapp.com/emojis/818757771310792704.png?v=1"
         }
     }
-    
+
     webhook() {
         const { id, token, username, avatar } = this.webhookOptions;
         return new Webhook(`https://discord.com/api/webhooks/${id}/${token}`, { username, avatar_url: avatar });
@@ -59,7 +59,7 @@ module.exports = class Tickets {
 
                 case `${this.prefix}:close`: {
                     if (this.options.support?.canOnlyCloseTickets && !member.permissions.has("MANAGE_GUILD")) {
-                        let [ support, staffOnly ] = [ this.getSupportIds(), () => send({ ephemeral: true, embeds: [ { author: { name: `Only support staff can close tickets`, iconURL: "https://cdn.discordapp.com/emojis/781955502035697745.gif" }, color: 0xFF0000 } ] })  ];
+                        let [support, staffOnly] = [this.getSupportIds(), () => send({ ephemeral: true, embeds: [{ author: { name: `Only support staff can close tickets`, iconURL: "https://cdn.discordapp.com/emojis/781955502035697745.gif" }, color: 0xFF0000 }] })];
                         if (!support.users?.includes?.(member.id)) {
                             if (!support.roles?.some?.(c => member.roles.cache.has(c))) return staffOnly()
                         }
@@ -68,7 +68,7 @@ module.exports = class Tickets {
                 }
 
                 case `${this.prefix}:modal_submit`: {
-                    let [ embed, fields, split ] = [ new MessageEmbed().setColor("ORANGE").setTimestamp().setTitle(`For Responses`).setFooter({ text: `ID: ${member.id}` }).setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ dynamic: true }) }),  [], false];
+                    let [embed, fields, split] = [new MessageEmbed().setColor("ORANGE").setTimestamp().setTitle(`For Responses`).setFooter({ text: `ID: ${member.id}` }).setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ dynamic: true }) }), [], false];
                     for (const c of int.fields.components) {
                         for (const cc of c.components) {
                             if (cc.value && cc.customId) {
@@ -79,36 +79,82 @@ module.exports = class Tickets {
                         }
                     }
                     if (embed.length >= 6000 || split) {
-                        return this.handleCreate({ guild, member, category, send, embeds: fields.map((v, i) => ({
-                            title: `Form Response: ${v.name}`, color: embed.color, description: v.value,
-                            author: i === 0 ? { name: member.user.username, iconURL: member.user.displayAvatarURL({ dynamic: true }) } : undefined,
-                            timestamp: fields.length - 1 === i ? new Date() : undefined,
-                            footer: fields.length - 1 === i ? { text: `ID: ${member.id}` } : undefined
-                        })) })
+                        return this.handleCreate({
+                            guild, member, category, send, embeds: fields.map((v, i) => ({
+                                title: `Form Response: ${v.name}`, color: embed.color, description: v.value,
+                                author: i === 0 ? { name: member.user.username, iconURL: member.user.displayAvatarURL({ dynamic: true }) } : undefined,
+                                timestamp: fields.length - 1 === i ? new Date() : undefined,
+                                footer: fields.length - 1 === i ? { text: `ID: ${member.id}` } : undefined
+                            }))
+                        })
                     };
-                    return this.handleCreate({ guild, member, category, send, embeds: [ embed ]})
+                    return this.handleCreate({ guild, member, category, send, embeds: [embed] })
                 }
             };
             if (customId.startsWith(`${this.prefix}:close:confirm`)) {
                 await send({ ephemeral: true }, true);
-                let user = await this.options.client.users.fetch(customId.split("close:confirm:")[1]).catch(() => null);
+                let user = await this.options.client.users.fetch(customId.split("close:confirm:")[1]).catch(e => this._debug(e));
                 if (!user) return send({ content: `❌ I was unable to fetch the user that opened the ticket.` })
                 let messages = await this.fetchMessages(channel, 5000);
                 if (!messages?.length) return send({ content: `❌ I was unable to close the ticket, I couldn't fetch the messages in this channel.` })
                 let closed = await channel.delete(`${member.user.tag} (${member.id}) closed the ticket.`).catch(e => this._debug(e));
                 if (!closed) return send({ content: `❌ I was unable to delete the channel & close the ticket.` })
                 return this.closeTicket({ channel, guild, user, member, messages });
+            };
+
+            if (customId.startsWith("unban:")) {
+                if (!int.memberPermissions?.has?.([ "BAN_MEMBERS" ])) return send({ content: `❌ You need (Ban Members) in this server to complete this action!`, ephemeral: true });
+                let server = this.getAppealServer();
+                if (!server) return send({ content: `❌ I was unable to find the appeal server!`, ephemeral: true });
+                let mod = server.members.resolve(member.id) || await server.members.fetch(member.id).catch(e => this._debug(e));
+                if (!mod) return send({ content: `❌ I was unable to find you in ${server.name}!`, ephemeral: true });
+                if (!mod.permissions?.has?.([ "BAN_MEMBERS" ])) return send({ content: `❌ You need (Ban Members) in ${server.name} to complete this action!`, ephemeral: true });
+                return int.showModal(modal({
+                    id: `unban_modal:${customId.split(":")[1]}`,
+                    title: `Unban From ${server.name}`,
+                    components: [ { type: 1, components: [ { type: 4, label: "Reason", custom_id: "reason", style: 2, min_length: 1, max_length: 512, required: true, value: `No Reason Provided | By: ${member.user.tag} (${member.id})` } ] } ]
+                })).catch(e => this._debug(e));
+            }
+
+            if (customId.startsWith("unban_modal:")) {
+                await send({ ephemeral: true }, true);
+                const [ , id ] = customId.split(":");
+                if (!int.memberPermissions?.has?.([ "BAN_MEMBERS" ])) return send({ content: `❌ You need (Ban Members) in this server to complete this action!` });
+                let server = this.getAppealServer();
+                if (!server) return send({ content: `❌ I was unable to find the appeal server!` });
+                let mod = server.members.resolve(member.id) || await server.members.fetch(member.id).catch(e => this._debug(e));
+                if (!mod) return send({ content: `❌ I was unable to find you in ${server.name}!` });
+                if (!mod.permissions?.has?.([ "BAN_MEMBERS" ])) return send({ content: `❌ You need (Ban Members) in ${server.name} to complete this action!` });
+                let isBanned = await server.bans.fetch({ user: id, force: true }).catch(e => this._debug(e));
+                if (!isBanned) return send({ content: `❌ User (<@${id}>) isn't banned in the main server!` });
+                return server.bans.remove(id, int.fields.getTextInputValue("reason") ?? `No Reason Provided | By: ${member.user.tag} (${member.id})`)
+                .then(() => {
+                    int.message.edit({ components: [ { type: 1, components: [ button({ title: "Unbanned!", style: 3, id: "_ _", disabled: true, emoji: { id: `476629550797684736` } }) ] } ] }).catch(e => this._debug(e));
+                    send({ content: `✅ Successfully unbanned <@${id}> from ${server.name}!` })
+                })
+                .catch(e => send({ content: `❌ Unable to unban <@${id} from ${server.name}!`, embeds: [ { title: "ERROR", description: `\`\`\`js\n${e.message ?? e.stack}\`\`\``, color: 0xFF0000 } ] }))
             }
         };
     };
+    /**
+     * @returns {import("discord.js").Guild|null}
+     */
+    getAppealServer() {
+        const { appeals, client } = this.options;
+        if (!appeals?.enabled || !appeals?.mainserver?.checkIfBanned) return null;
+        let server = client.guilds.resolve(appeals.mainserver?.id);
+        if (!server?.available) return null;
+        return server;
+    }
 
     /** @private */
     async handleCreate({ guild, member, category, send, embeds = [] } = {}) {
         await send({ ephemeral: true }, true);
-        let [ supportIds, permissions, allow, { appeals } ] = [
+        let [supportIds, permissions, allow, { appeals }, sendBanReason] = [
             this.getSupportIds(), [],
             ["ADD_REACTIONS", "ATTACH_FILES", "CREATE_INSTANT_INVITE", "EMBED_LINKS", "READ_MESSAGE_HISTORY", "VIEW_CHANNEL", "USE_EXTERNAL_EMOJIS", "SEND_MESSAGES"],
-            this.options ?? {}
+            this.options ?? {},
+            null
         ];
         if (supportIds.roles.length) for (const sup of supportIds.roles) {
             let role = guild.roles.resolve(sup);
@@ -123,25 +169,41 @@ module.exports = class Tickets {
             if (member) permissions.push({ type: "member", id: uId, allow });
         }
         if (appeals?.enabled) {
-            if (appeals.mainserver?.id && appeals.mainserver.checkIfBanned) {
-                let server = this.options.client.guilds.resolve(appeals.mainserver.id);
-                if (server?.available) {
-                    let isBanned = await server.bans.fetch({ user: member.id, force: true }).catch(() => null);
-                    if (!isBanned) return send(
-                        typeof appeals.embeds?.not_banned === "object" ?
-                            appeals.embeds.not_banned :
-                            {
-                                embeds: [
-                                    {
-                                        author: { name: guild.name, icon_url: guild.iconURL({ dynamic: true }) },
-                                        title: "INFO",
-                                        description: `❌ You can't open this ticket due to you not being banned in the main server!`,
-                                        color: 0xFF0000,
-                                        timestamp: new Date()
-                                    }
-                                ]
-                            }
-                    )
+            let server = this.getAppealServer();
+            if (server) {
+                let ban = await server.bans.fetch({ user: member.id, force: true }).catch(e => this._debug(e));
+                if (!ban) return send(
+                    typeof appeals.embeds?.not_banned === "object" ?
+                        appeals.embeds.not_banned :
+                        {
+                            embeds: [
+                                {
+                                    author: { name: guild.name, icon_url: guild.iconURL({ dynamic: true }) },
+                                    title: "INFO",
+                                    description: `❌ You can't open this ticket due to you not being banned in the main server!`,
+                                    color: 0xFF0000,
+                                    timestamp: new Date()
+                                }
+                            ]
+                        }
+                );
+                sendBanReason = {
+                    embeds: [
+                        {
+                            author: { name: server.name, iconURL: server.iconURL({ dynamic: true }) },
+                            title: "Ban Reason",
+                            description: ban.reason ?? "No Reason Provided?",
+                            color: 0xFF0000,
+                            timestamp: new Date()
+                        }
+                    ],
+                    components: [
+                        {
+                            type: 1, components: [
+                                button({ id: `unban:${member.id}`, style: 4, title: "Unban", emoji: { name: "🔒" } })
+                            ]
+                        }
+                    ]
                 }
             }
         }
@@ -168,7 +230,8 @@ module.exports = class Tickets {
             components: [{ type: 1, components: [{ type: 2, custom_id: `${this.prefix}:close`, label: "Close Ticket", style: 4, emoji: { name: "🔒" } }] }]
         }).catch(e => this._debug(e));
         if (!msg) return null;
-        if (embeds?.length <= 10) for await (const embed of embeds) await channel.send({ embeds: [ embed ] }).catch(e => this._debug(e));
+        if (sendBanReason) await channel.send(sendBanReason).catch(e => this._debug(e));
+        if (embeds?.length <= 10) for await (const embed of embeds) await channel.send({ embeds: [embed] }).catch(e => this._debug(e));
         if (this.webhookOptions.id && this.webhookOptions.token) this.webhook()
             .embed({
                 author: { name: guild.name, icon_url: guild.iconURL({ dynamic: true }) },
@@ -179,8 +242,8 @@ module.exports = class Tickets {
                 footer: { text: `Ticket ID: ${channel.name.split("-")[1]}` },
             }).send().catch(e => this._debug(e));
         return send({
-            embeds: [ { author: { name: `Ticket Created!`, icon_url: `https://cdn.discordapp.com/emojis/476629550797684736.gif` }, description: channel.toString(), color: 0xFF000 } ],
-            components: [ { type: 1, components: [ button({ title: "Go to ticket", url: msg.url }) ] } ]
+            embeds: [{ author: { name: `Ticket Created!`, icon_url: `https://cdn.discordapp.com/emojis/476629550797684736.gif` }, description: channel.toString(), color: 0xFF000 }],
+            components: [{ type: 1, components: [button({ title: "Go to ticket", url: msg.url })] }]
         })
     }
 
@@ -194,7 +257,7 @@ module.exports = class Tickets {
      * @param {import("@elara-services/packages").Modal['components']} [options.components]
      */
     modal(options = { title: "", components: [] }) {
-        return modal({ id: `${this.prefix}:modal_submit`, title: options?.title || "Create Ticket", components: options?.components?.length >= 1 ? options.components : [ { type: 1, components: [ { type: 4, min_length: 10, max_length: 4000, custom_id: "message", label: "Content", style: 2, placeholder: "What's the ticket about?", required: true } ] } ] })
+        return modal({ id: `${this.prefix}:modal_submit`, title: options?.title || "Create Ticket", components: options?.components?.length >= 1 ? options.components : [{ type: 1, components: [{ type: 4, min_length: 10, max_length: 4000, custom_id: "message", label: "Content", style: 2, placeholder: "What's the ticket about?", required: true }] }] })
     }
 
     async starterMessage(channelId, options) {
@@ -255,7 +318,7 @@ module.exports = class Tickets {
                     str.push(content)
                 };
                 if (message.embeds?.length) {
-                    let arr = [ `<discord-embeds slot="embeds">` ];
+                    let arr = [`<discord-embeds slot="embeds">`];
                     for (const embed of message.embeds) {
                         let emb = [
                             `<discord-embed slot="embed" ${embed.thumbnail?.url ? `thumbnail="${embed.thumbnail.url}"` : ""} ${embed.image?.url ? `image="${embed.image.url}"` : ""} ${embed.author ? `${embed.author.name ? `author-name="${embed.author.name}"` : ""} ${embed.author.iconURL ? `author-image="${embed.author.iconURL}"` : ""} ${embed.author.url ? `author-url="${embed.author.url}"` : ""}` : ""} ${embed.title ? `embed-title="${embed.title}"` : ""}${embed.color ? `color="${embed.hexColor}"` : ""}>`
@@ -291,7 +354,7 @@ module.exports = class Tickets {
                     if (row.length >= 2) str.push(...row, `</discord-attachments>`)
                 }
                 if (message.attachments.size) str.push(message.attachments.map((c) => `<a href="${c.proxyURL}">${c.name}</a>`).join("<br>"))
-                str.push(`${message.content?.length ? `<br><br>` : "" }<code style="background-color: #36393e; color: white;">ID: ${message.id}</code>`)
+                str.push(`${message.content?.length ? `<br><br>` : ""}<code style="background-color: #36393e; color: white;">ID: ${message.id}</code>`)
                 return [...str, `</discord-message>`].join(" ");
             }),
             "</discord-messages>"].join(" ");
