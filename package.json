@@ -8,7 +8,7 @@
   "author": "SUPERCHIEFYT (Elara-Discord-Bots, Elara-Services)",
   "license": "MIT",
   "optionalDependencies": {
-    "discord.js": "13.8.1"
+    "discord.js": "13.9.0"
   },
   "dependencies": {
     "@elara-services/packages": "5.0.0",
