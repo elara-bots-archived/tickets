@@ -44,6 +44,7 @@ declare module "@elara-services/tickets" {
             roles?: string[];
             users?: string[];
             canOnlyCloseTickets?: boolean;
+            ignore?: string[]
         };
 
         /** @deprecated Use 'webhook.id' */

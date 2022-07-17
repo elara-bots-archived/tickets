@@ -53,6 +53,9 @@ module.exports = class Tickets {
             };
             switch (customId) {
                 case this.prefix: {
+                    if (this.options.support?.ignore?.length) {
+                        if (this.options.support.ignore.some(c => member.roles.cache.has(c))) return send({ content: `❌ You can no longer create tickets, if you believe this is a mistake contact one of the staff members.`, ephemeral: true });
+                    }
                     if (this.options.modal?.enabled) return int.showModal(this.modal({ title: this.options.modal.title, components: this.options.modal.questions?.length >= 1 ? this.options.modal.questions.slice(0, 5).map(c => ({ type: 1, components: [{ min_length: c.min_length || 10, max_length: c.max_length || 4000, type: 4, style: c.style || 2, label: c.label, value: c.value, placeholder: c.placeholder, required: c.required, custom_id: c.label || `random_${Math.floor(Math.random() * 10000)}` }] })) : [] })).catch(e => this._debug(e));
                     return this.handleCreate({ guild, member, category, send })
                 };
