@@ -8,8 +8,6 @@ declare module "@elara-services/tickets" {
         prefix: string;
         debug?: boolean;
         encryptToken: string;
-        ticketCategory?: string;
-        ticketOpen?: Pick<MessageOptions, "content" | "embeds">
         appeals?: {
             enabled: boolean;
             sendBanResults?: boolean;
@@ -46,19 +44,17 @@ declare module "@elara-services/tickets" {
             canOnlyCloseTickets?: boolean;
             ignore?: string[]
         };
+        ticket?: {
+            category?: string;
+            closeReason?: boolean;
+            limitOnePerUser?: boolean;
+            open?: Pick<MessageOptions, "content" | "embeds">
+        }
 
-        /** @deprecated Use 'webhook.id' */
-        webhookId?: string;
-        /** @deprecated Use 'webhook.token' */
-        webhookToken?: string;
-        /** @deprecated Use 'webhook.username' */
-        webhookUsername?: string;
-        /** @deprecated Use 'webhook.avatar' */
-        webhookAvatar?: string;
-        /** @deprecated Use 'support.roles' */
-        supportRoleIds?: string[];
-        /** @deprecated Use 'support.users' */
-        supportUserIds?: string[];
+        /** @deprecated Use 'ticket.category', 'ticketCategory' will be removed in the next major version */
+        ticketCategory?: string;
+        /** @deprecated Use 'ticket.open', 'ticketOpen' will be removed in the next major version */
+        ticketOpen?: Pick<MessageOptions, "content" | "embeds">
     }
 
     class Tickets {

@@ -1,18 +1,24 @@
 {
   "name": "@elara-services/tickets",
-  "version": "2.4.0",
+  "version": "3.0.0",
   "description": "Helper for tickets",
   "main": "index.js",
   "types": "index.d.ts",
   "typings": "index.d.ts",
   "author": "SUPERCHIEFYT (Elara-Discord-Bots, Elara-Services)",
   "license": "MIT",
+  "scripts": {
+    "lint": "eslint ."
+  },
   "optionalDependencies": {
-    "discord.js": "13.8.1"
+    "discord.js": "13.9.0"
   },
   "dependencies": {
     "@elara-services/packages": "5.0.0",
     "discord-hook": "2.0.0",
     "shortid": "2.2.16"
+  },
+  "devDependencies": {
+    "eslint": "8.20.0"
   }
 }
