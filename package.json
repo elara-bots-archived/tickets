@@ -1,6 +1,6 @@
 {
   "name": "@elara-services/tickets",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "description": "Helper for tickets",
   "main": "index.js",
   "types": "index.d.ts",
@@ -9,9 +9,6 @@
   "license": "MIT",
   "scripts": {
     "lint": "eslint ."
-  },
-  "optionalDependencies": {
-    "discord.js": "13.9.0"
   },
   "dependencies": {
     "@elara-services/packages": "5.0.0",
