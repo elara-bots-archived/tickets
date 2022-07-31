@@ -56,11 +56,11 @@ declare module "@elara-services/tickets" {
         /** @deprecated Use 'ticket.open', 'ticketOpen' will be removed in the next major version */
         ticketOpen?: Pick<MessageOptions, "content" | "embeds">
 
-        reports?: {
-            enabled: boolean;
-            shouldBeTicket?: boolean;
+        // reports?: {
+        //     enabled: boolean;
+        //     shouldBeTicket?: boolean;
             
-        }
+        // }
     }
 
     class Tickets {
