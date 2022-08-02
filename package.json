@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@elara-services/packages": "5.0.0",
-    "discord-hook": "2.0.0",
+    "discord-hook": "3.0.2",
     "shortid": "2.2.16"
   },
   "devDependencies": {
